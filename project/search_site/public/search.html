@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html>
+<header>
+    <title>全球体育快报</title>
+    <script src="https://cdn.bootcss.com/jquery/3.4.1/jquery.js"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/echarts@4.7.0/dist/echarts.min.js"></script>
+    <link href="stylesheets/style.css" rel="stylesheet" type="text/css" />
+</header>
+<body style="background:url(images/background1.jpg);
+             background-size:100% 100%;
+             background-attachment:fixed;">
+    <div class="title-container">
+        <img id="title" src="images/title.png" alt="Title">
+    </div>
+    <div class="search-box">
+        <form>
+            <input type="text" id="input-box1" name="title_text1" autocomplete="on" placeholder="标题关键词1">
+            <input type="text" id="input-box2" name="title_text2" autocomplete="on" placeholder="标题关键词2">
+            <select id="select-date" name="date-range">
+                <option value="">全部</option>
+                <option value="2023-07-18">07-18</option>
+                <option value="2023-07-17">07-17</option>
+                <option value="2023-07-16">07-16</option>
+                <option value="2023-07-15">07-15</option>
+                <option value="2023-07-14">07-14</option>
+                <option value="2023-07-13">07-13</option>
+            </select>
+        </form>
+    </div>
+    <div>
+        <input class="form-submit" type="button" value="查询">
+        <button class="reset" type="button" onclick="reset()">重置</button>
+    </div>
+    <div class="search-result">
+        <div class="nav">
+            <ul id="nav-bar">
+                <li onclick="searchDqd()">懂球帝<br><img id="dqd-logo" src="images/dqd-logo.jpg" alt="懂球帝"></li>
+                <li onclick="searchHupu()">虎扑体育<br><img id="hupu-logo" src="images/hupu-logo.png" alt="虎扑体育"></li>
+                <li onclick="heatAnalyze()">热度分析<br><img id="heat-analyze" src="images/heat-analyze.jpg" alt="热度分析"></li>
+            </ul>
+        </div>
+        <div class="block" style="margin-left:120px;height:432px;overflow:auto;">
+            <table id="record"></table>
+        </div>
+    </div>
+    
+    <script>
+        $(document).ready(function() {
+            $(".form-submit").click(function() {
+                searchDqd();
+            });
+        });
+
+        function searchDqd() {
+            $(".nav").empty().append('<ul id="nav-bar">' + 
+                '<li class="active" onclick="searchDqd()">懂球帝<br><img id="dqd-logo" src="images/dqd-logo.jpg" alt="懂球帝"></li>' + 
+                '<li onclick="searchHupu()">虎扑体育<br><img id="hupu-logo" src="images/hupu-logo.png" alt="虎扑体育"></li>' + 
+                '<li onclick="heatAnalyze()">热度分析<br><img id="heat-analyze" src="images/heat-analyze.jpg" alt="热度分析"></li>' + 
+                '</ul>');
+            $.get('/process_get?tablename=fetches_1&type=normal&title1=' + $("#input-box1:text").val() + '&title2=' + $("#input-box2:text").val() + '&date=' + $("#select-date").val(), function(data) {
+                $("#record").empty();
+                $("#record").append('<thead><tr><th>标题</th>' + 
+                    '<th>关键词</th><th>作者</th><th onclick="sortTable()">刊登日期</th></tr></thead>');
+                for (let list of data) {
+                    let table = '<tbody><tr><td>';
+                    let index = 0;
+                    let url = "";
+                    Object.values(list).forEach(element => {
+                        if (index == 0) {
+                            url = element;
+                        }
+                        else {
+                            if (index == 1) { // 将网页url加在标题上
+                                table += ('<a href="' + list.url + '" target="_blank">' + element + '</a>' + '</td><td>');
+                            }
+                            else if (index == 2) { // 只显示前五个关键词
+                                keywords = element.split(" ");
+                                if (keywords.length > 5) {
+                                    tmp = "";
+                                    for (let i = 0; i < 5; i++) {
+                                        tmp += keywords[i] + " ";
+                                    }
+                                    element = tmp.trim();
+                                }
+                                table += (element + '</td><td>');
+                            }
+                            else if (index == 4) { // 转换日期格式
+                                let date = new Date(element);
+                                let year = date.getFullYear();
+                                let month = (date.getMonth() + 1).toString().padStart(2, '0');
+                                let day = date.getDate().toString().padStart(2, '0');
+                                element = year + '-' + month + '-' + day;
+                                table += (element + '</td>');
+                            }
+                            else {
+                                table += (element + '</td><td>');
+                            }
+                        }
+                        index++;
+                    });
+                    $("#record").append(table + '</tr></tbody>');
+                } 
+            });
+        }
+
+        function searchHupu() {
+            $(".nav").empty().append('<ul id="nav-bar">' + 
+                '<li onclick="searchDqd()">懂球帝<br><img id="dqd-logo" src="images/dqd-logo.jpg" alt="懂球帝"></li>' + 
+                '<li class="active" onclick="searchHupu()">虎扑体育<br><img id="hupu-logo" src="images/hupu-logo.png" alt="虎扑体育"></li>' + 
+                '<li onclick="heatAnalyze()">热度分析<br><img id="heat-analyze" src="images/heat-analyze.jpg" alt="热度分析"></li>' + 
+                '</ul>');
+            $.get('/process_get?tablename=fetches_2&type=normal&title1=' + $("#input-box1:text").val() + '&title2=' + $("#input-box2:text").val() + '&date=' + $("#select-date").val(), function(data) {
+                $("#record").empty();
+                $("#record").append('<thead><tr><th>标题</th>' + 
+                    '<th>关键词</th><th>作者</th><th onclick="sortTable()">刊登日期</th></tr></thead>');
+                for (let list of data) {
+                    let table = '<tbody><tr><td>';
+                    let index = 0;
+                    let url = "";
+                    Object.values(list).forEach(element => {
+                        if (index == 0) {
+                            url = element;
+                        }
+                        else {
+                            if (index == 1) { // 将网页url加在标题上
+                                table += ('<a href="' + list.url + '" target="_blank">' + element + '</a>' + '</td><td>');
+                            }
+                            else if (index == 4) { // 转换日期格式
+                                let date = new Date(element);
+                                let year = date.getFullYear();
+                                let month = (date.getMonth() + 1).toString().padStart(2, '0');
+                                let day = date.getDate().toString().padStart(2, '0');
+                                element = year + '-' + month + '-' + day;
+                                table += (element + '</td>');
+                            }
+                            else {
+                                table += (element + '</td><td>');
+                            }
+                        }
+                        index++;
+                    });
+                    $("#record").append(table + '</tr></tbody>');
+                } 
+            });
+        }
+
+        function sortTable() {
+            var table, rows, switching, i, x, y, shouldSwitch, dir, switchcount = 0;
+            table = document.getElementById("record");
+            switching = true;
+            // 设置升序排列
+            dir = "asc";
+            while (switching) {
+                // 设置循环结束标记
+                switching = false;
+                rows = table.rows;
+                for (i = 1; i < (rows.length - 1); i++) {
+                    // 设置元素是否调换位置
+                    shouldSwitch = false;
+                    x = rows[i].getElementsByTagName("TD")[3];
+                    y = rows[i + 1].getElementsByTagName("TD")[3];
+                    if (dir == "asc") {
+                        if (x.innerHTML.toLowerCase() > y.innerHTML.toLowerCase()) {
+                            shouldSwitch = true;
+                            break;
+                        }
+                    } else if (dir == "desc") {
+                        if (x.innerHTML.toLowerCase() < y.innerHTML.toLowerCase()) {
+                            shouldSwitch = true;
+                            break;
+                        }
+                    }
+                }
+                if (shouldSwitch) {
+                    // 如果元素调换位置设置为true，则进行对调操作
+                    rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
+                    switching = true;
+                    // 每次对调完成时，将switchcount增加1
+                    switchcount ++;
+                } else { // 如果完成所有元素的排序且 direction 设置为 "asc",这时就将 direction 设置为 "desc" 并再次执行循环
+                    if (switchcount == 0 && dir == "asc") {
+                        dir = "desc";
+                        switching = true;
+                    }
+                }
+            }
+        }
+        
+        function reset() {
+            document.getElementById("input-box1").value = "";
+            document.getElementById("input-box2").value = "";
+            document.getElementById("select-date").value = "";
+        }
+    </script>
+
+    <script type="text/javascript">
+        function heatAnalyze() {
+            $(".nav").empty().append('<ul id="nav-bar">' + 
+                '<li onclick="searchDqd()">懂球帝<br><img id="dqd-logo" src="images/dqd-logo.jpg" alt="懂球帝"></li>' + 
+                '<li onclick="searchHupu()">虎扑体育<br><img id="hupu-logo" src="images/hupu-logo.png" alt="虎扑体育"></li>' + 
+                '<li class="active" onclick="heatAnalyze()">热度分析<br><img id="heat-analyze" src="images/heat-analyze.jpg" alt="热度分析"></li>' + 
+                '</ul>');
+            $(".block").empty().append('<div id="heat-graph" style="margin-left:0px;margin-top:0px;height:100%;"></div>');
+
+            var myChart = echarts.init(document.getElementById("heat-graph"));
+            option = null;
+            function fetchData(cb) {
+                /* 对懂球帝新闻进行统计 */
+                var data_list1 = new Array(10).fill(0);
+                $.get('/process_get?tablename=fetches_1&type=heat&title1=' + $("#input-box1:text").val() + '&title2=' + $("#input-box2:text").val(), function(data1) {
+                    for (let list of data1) {
+                        Object.values(list).forEach(element => {
+                            // 转换日期时间格式
+                            var date = new Date(element);
+                            var year = date.getFullYear();
+                            var month = (date.getMonth() + 1).toString().padStart(2, '0');
+                            var day = date.getDate().toString().padStart(2, '0');
+                            var hours = date.getHours().toString().padStart(2, '0');
+                            var minutes = date.getMinutes().toString().padStart(2, '0');
+                            var seconds = date.getSeconds().toString().padStart(2, '0');
+                            element = year + '-' + month + '-' + day + ' ' + hours + ':' + minutes + ':' + seconds;
+
+                            if (element.startsWith("2023-07-13 21")) {
+                                data_list1[0] += 1;
+                            }
+                            else if (element.startsWith("2023-07-14 09")) {
+                                data_list1[1] += 1;
+                            }
+                            else if (element.startsWith("2023-07-14 21")) {
+                                data_list1[2] += 1;
+                            }
+                            else if (element.startsWith("2023-07-15 09")) {
+                                data_list1[3] += 1;
+                            }
+                            else if (element.startsWith("2023-07-15 21")) {
+                                data_list1[4] += 1;
+                            }
+                            else if (element.startsWith("2023-07-16 09")) {
+                                data_list1[5] += 1;
+                            }
+                            else if (element.startsWith("2023-07-16 21")) {
+                                data_list1[6] += 1;
+                            }
+                            else if (element.startsWith("2023-07-17 09")) {
+                                data_list1[7] += 1;
+                            }
+                            else if (element.startsWith("2023-07-17 21")) {
+                                data_list1[8] += 1;
+                            }
+                            else if (element.startsWith("2023-07-18 09")) {
+                                data_list1[9] += 1;
+                            }
+                        });
+                    }
+                });
+
+                /* 对虎扑体育新闻进行统计 */
+                var data_list2 = new Array(10).fill(0);
+                $.get('/process_get?tablename=fetches_2&type=heat&title1=' + $("#input-box1:text").val() + '&title2=' + $("#input-box2:text").val(), function(data2) {
+                    for (let list of data2) {
+                        Object.values(list).forEach(element => {
+                            // 转换日期时间格式
+                            var date = new Date(element);
+                            var year = date.getFullYear();
+                            var month = (date.getMonth() + 1).toString().padStart(2, '0');
+                            var day = date.getDate().toString().padStart(2, '0');
+                            var hours = date.getHours().toString().padStart(2, '0');
+                            var minutes = date.getMinutes().toString().padStart(2, '0');
+                            var seconds = date.getSeconds().toString().padStart(2, '0');
+                            element = year + '-' + month + '-' + day + ' ' + hours + ':' + minutes + ':' + seconds;
+
+                            if (element.startsWith("2023-07-13 21")) {
+                                data_list2[0] += 1;
+                            }
+                            else if (element.startsWith("2023-07-14 09")) {
+                                data_list2[1] += 1;
+                            }
+                            else if (element.startsWith("2023-07-14 21")) {
+                                data_list2[2] += 1;
+                            }
+                            else if (element.startsWith("2023-07-15 09")) {
+                                data_list2[3] += 1;
+                            }
+                            else if (element.startsWith("2023-07-15 21")) {
+                                data_list2[4] += 1;
+                            }
+                            else if (element.startsWith("2023-07-16 09")) {
+                                data_list2[5] += 1;
+                            }
+                            else if (element.startsWith("2023-07-16 21")) {
+                                data_list2[6] += 1;
+                            }
+                            else if (element.startsWith("2023-07-17 09")) {
+                                data_list2[7] += 1;
+                            }
+                            else if (element.startsWith("2023-07-17 21")) {
+                                data_list2[8] += 1;
+                            }
+                            else if (element.startsWith("2023-07-18 09")) {
+                                data_list2[9] += 1;
+                            }
+                        });
+                    }
+                });
+
+                // 通过 setTimeout 模拟异步加载
+                setTimeout(function () {
+                    cb({
+                        categories: ["07-13\n21:00", "07-14\n09:00", "07-14\n21:00", "07-15\n09:00", "07-15\n21:00",
+                        "07-16\n09:00", "07-16\n21:00", "07-17\n09:00", "07-17\n21:00", "07-18\n09:00"],
+                        data: data_list1.map(function(v, i) {
+                            return v + data_list2[i];
+                        }),
+                        list1 : data_list1,
+                        list2 : data_list2
+                    });
+                }, 2000);
+            }
+
+            var option = {
+                title: {
+                    text: '词条热度分析图',
+                    textStyle: {
+                        fontWeight:'bold',
+                        fontSize: 24,
+                    },
+                    x: 'center',
+                    top: '10'
+                },
+                tooltip: {},
+                legend: [{
+                    data:['新闻数量'],
+                    textStyle: {
+                        fontWeight:'bold',
+                        fontSize: 18,
+                    },
+                    itemHeight: 18,
+                    top: '60',
+                    right: '40'
+                },
+                {
+                    data:['懂球帝', '虎扑体育'],
+                    textStyle: {
+                        fontWeight:'bold',
+                        fontSize: 18,
+                    },
+                    itemHeight: 18,
+                    top: '90',
+                    right: '40',
+                    orient: 'vertical'
+                }],
+                xAxis: {
+                    data: []
+                },
+                yAxis: {},
+                series: []
+            };
+
+            myChart.showLoading();
+
+            fetchData(function (data) {
+                myChart.hideLoading();
+                myChart.setOption({
+                    xAxis: {
+                        data: data.categories
+                    },
+                    series: getSeriesData(data.categories, data.data, data.list1, data.list2)
+                });
+            });;
+            if (option && typeof option === "object") {
+                myChart.setOption(option, true);
+            }
+
+            function getSeriesData(categories, lineData, data_list1, data_list2) {
+                var seriesData = [];
+
+                seriesData.push(
+                    {
+                        name: '新闻数量',
+                        type: 'line',
+                        data: lineData,
+                        tooltip: {
+                            formatter: '时间 : {b}<br/>{a} : {c} 条',
+                        }
+                    }
+                );
+
+                for (var i = 0; i < categories.length; i++) {
+                    seriesData.push({
+                        name: categories[i],
+                        type: 'pie',
+                        radius: '15%',
+                        center: [(i * 8 + 14) + '%', '78%'],
+                        label: {
+                            normal: {
+                                formatter: '{c}',
+                                position: 'inside'
+                            }
+                        },
+                        data: [
+                            { name: '懂球帝', value: data_list1[i] },
+                            { name: '虎扑体育', value: data_list2[i] },
+                        ]
+                    });
+                }
+
+                return seriesData;
+            }
+        }
+    </script>
+</body>
+</html>
